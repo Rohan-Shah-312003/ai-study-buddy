@@ -181,12 +181,12 @@ Make sure options are shuffled and realistic distractors.`;
     // }
     // Try Groq (free tier)
     // else
-     if (apiKey.startsWith('gsk_')) {
+    //  if (apiKey.startsWith('gsk_')) {
       return await callGroq(prompt);
-    }
-    else {
-      throw new Error('Invalid API key format');
-    }
+    // }
+    // else {
+    //   throw new Error('Invalid API key format');
+    // }
   };
   
 
