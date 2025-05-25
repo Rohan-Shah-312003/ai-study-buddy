@@ -14,7 +14,6 @@ const StudyBuddy = () => {
   const [studyTopic, setStudyTopic] = useState('');
   const [difficulty, setDifficulty] = useState('medium');
   const [isGenerating, setIsGenerating] = useState(false);
-  // const [apiKey, setApiKey] = useState('');
   const [showApiSetup, setShowApiSetup] = useState(false);
 
   // Timer states
@@ -116,20 +115,23 @@ const StudyBuddy = () => {
 
       const prompt = `Based on these study materials, create 5 multiple choice quiz questions:
 
-${cardContent}
+                      ${cardContent}
 
-Return ONLY a JSON array with this exact format:
-[
-  {
-    "question": "Question text here?",
-    "correct": "Correct answer",
-    "options": ["Correct answer", "Wrong option 1", "Wrong option 2", "Wrong option 3"]
-  }
-]
+                      Return ONLY a JSON array with this exact format:
+                      [
+                        {
+                          "question": "Question text here?",
+                          "correct": "Correct answer",
+                          "options": ["Correct answer", "Wrong option 1", "Wrong option 2", "Wrong option 3"]
+                        }
+                      ]
 
-Make sure options are shuffled and realistic distractors.`;
+                      DO NOT RETURN ANYTHING ELSE EVEN "Here's 5 multiple choice quiz questions..." TEXT
+                      Make sure options are shuffled and realistic distractors.`;
 
       const response = await callAI(prompt);
+      console.log(response);
+      
       const aiQuestions = JSON.parse(response);
 
       setQuizQuestions(aiQuestions);
@@ -171,16 +173,6 @@ Make sure options are shuffled and realistic distractors.`;
 
   // Multiple AI provider support
   const callAI = async (prompt) => {
-    // Try Hugging Face first (free tier available)
-    // if (apiKey.startsWith('hf_')) {
-    //   return await callHuggingFace(prompt);
-    // }
-    // Fallback to OpenAI
-    // else if (apiKey.startsWith('sk-')) {
-    //   return await callOpenAI(prompt);
-    // }
-    // Try Groq (free tier)
-    // else
     if (apiKey.startsWith('gsk_')) {
       return await callGroq(prompt);
     }
@@ -188,48 +180,6 @@ Make sure options are shuffled and realistic distractors.`;
       throw new Error('Invalid API key format');
     }
   };
-
-
-  // const callHuggingFace = async (prompt) => {
-  //   const response = await fetch('https://api-inference.huggingface.co/models/microsoft/DialoGPT-large', {
-  //     method: 'POST',
-  //     headers: {
-  //       'Authorization': `Bearer ${apiKey}`,
-  //       'Content-Type': 'application/json',
-  //     },
-  //     body: JSON.stringify({
-  //       inputs: prompt,
-  //       parameters: {
-  //         max_new_tokens: 1000,
-  //         temperature: 0.7,
-  //       }
-  //     })
-  //   });
-
-  //   if (!response.ok) throw new Error('Hugging Face API error');
-  //   const data = await response.json();
-  //   return data[0]?.generated_text || '';
-  // };
-
-  // const callOpenAI = async (prompt) => {
-  //   const response = await fetch('https://api.openai.com/v1/chat/completions', {
-  //     method: 'POST',
-  //     headers: {
-  //       'Authorization': `Bearer ${apiKey}`,
-  //       'Content-Type': 'application/json',
-  //     },
-  //     body: JSON.stringify({
-  //       model: 'gpt-3.5-turbo',
-  //       messages: [{ role: 'user', content: prompt }],
-  //       max_tokens: 1000,
-  //       temperature: 0.7,
-  //     })
-  //   });
-
-  //   if (!response.ok) throw new Error('OpenAI API error');
-  //   const data = await response.json();
-  //   return data.choices[0]?.message?.content || '';
-  // };
 
   const callGroq = async (prompt) => {
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -333,36 +283,7 @@ Make sure options are shuffled and realistic distractors.`;
         </h1>
         <p className="text-gray-600 text-center mb-6">Your intelligent AI-powered companion for effective learning</p>
 
-        {/* API Setup */}
-        {/* {!apiKey && (
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
-            <h3 className="font-semibold text-yellow-800 mb-2">🔑 Setup AI Integration</h3>
-            <p className="text-yellow-700 text-sm mb-3">To use AI features, add your API key from one of these free providers:</p>
-            <div className="space-y-2 text-sm text-yellow-700 mb-3">
-              <div>• <strong>Groq (Recommended):</strong> Free tier available - get key at console.groq.com</div>
-              <div>• <strong>Hugging Face:</strong> Free tier - get key at huggingface.co/settings/tokens</div>
-              <div>• <strong>OpenAI:</strong> Paid service - get key at platform.openai.com</div>
-            </div>
-            <div className="flex gap-2">
-              <input
-                type="password"
-                placeholder="Enter your API key (e.g., gsk_... for Groq)"
-                value={apiKey}
-                onChange={(e) => setApiKey(e.target.value)}
-                className="flex-1 p-2 border rounded focus:ring-2 focus:ring-blue-500"
-              />
-              <button
-                onClick={() => setApiKey(apiKey)}
-                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-              >
-                Save
-              </button>
-            </div>
-          </div>
-        )} */}
-
         {/* AI Topic Input */}
-        {/* {apiKey && ( */}
         <div className="bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl p-4 mb-6">
           <h3 className="font-semibold mb-3 flex items-center gap-2">
             <Sparkles size={20} />
@@ -403,7 +324,6 @@ Make sure options are shuffled and realistic distractors.`;
             </button>
           </div>
         </div>
-        {/* )} */}
 
         {/* Navigation Tabs */}
         <div className="flex flex-wrap justify-center gap-2 mb-6 border-b">
@@ -616,7 +536,7 @@ Make sure options are shuffled and realistic distractors.`;
                     <button
                       onClick={generateQuizWithAI}
                       disabled={flashcards.length === 0 || isGenerating}
-                      className="bg-blue-600 text-white px-8 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center gap-2"
+                      className="bg-blue-600 text-gray-600 text-white px-8 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center gap-2"
                     >
                       {isGenerating ? <Loader2 className="animate-spin" size={18} /> : <Sparkles size={18} />}
                       AI Quiz
@@ -625,7 +545,7 @@ Make sure options are shuffled and realistic distractors.`;
                   <button
                     onClick={generateBasicQuiz}
                     disabled={flashcards.length === 0}
-                    className="bg-gray-600 text-white px-8 py-3 rounded-lg font-medium hover:bg-gray-700 transition-colors disabled:opacity-50"
+                    className="bg-gray-600  text-white px-8 py-3 rounded-lg font-medium hover:bg-gray-700 transition-colors disabled:opacity-50"
                   >
                     Basic Quiz
                   </button>
@@ -634,23 +554,23 @@ Make sure options are shuffled and realistic distractors.`;
             ) : quizStarted ? (
               <div>
                 <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-semibold">Question {currentQuiz + 1} of {quizQuestions.length}</h3>
-                  <div className="bg-gray-200 rounded-full h-2 w-32">
+                  <h3 className="text-lg text-gray-600 font-semibold">Question {currentQuiz + 1} of {quizQuestions.length}</h3>
+                  <div className="bg-gray-200 text-gray-600 rounded-full h-2 w-32">
                     <div
-                      className="bg-blue-600 h-2 rounded-full transition-all"
+                      className="bg-blue-600 h-2  rounded-full transition-all"
                       style={{ width: `${((currentQuiz + 1) / quizQuestions.length) * 100}%` }}
                     ></div>
                   </div>
                 </div>
 
                 <div className="bg-gray-50 p-6 rounded-lg mb-6">
-                  <h4 className="text-xl font-medium mb-4">{quizQuestions[currentQuiz]?.question}</h4>
-                  <div className="grid gap-3">
+                  <h4 className="text-xl text-gray-600 font-medium mb-4">{quizQuestions[currentQuiz]?.question}</h4>
+                  <div className="grid text-gray-600 gap-3">
                     {quizQuestions[currentQuiz]?.options.map((option, index) => (
                       <button
                         key={index}
                         onClick={() => handleQuizAnswer(option)}
-                        className="text-left p-3 bg-white border rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-colors"
+                        className="text-left text-gray-600 p-3 bg-white border rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-colors"
                       >
                         {option}
                       </button>
@@ -738,7 +658,7 @@ Make sure options are shuffled and realistic distractors.`;
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="bg-gray-50 p-6 rounded-lg">
-                <h3 className="text-lg font-semibold mb-4">Card Difficulty Distribution</h3>
+                <h3 className="text-lg text-gray-600 font-semibold mb-4">Card Difficulty Distribution</h3>
                 <div className="space-y-2">
                   {['easy', 'medium', 'hard'].map(difficulty => {
                     const count = flashcards.filter(c => c.difficulty === difficulty).length;
@@ -764,12 +684,12 @@ Make sure options are shuffled and realistic distractors.`;
               </div>
 
               <div className="bg-gray-50 p-6 rounded-lg">
-                <h3 className="text-lg font-semibold mb-4">AI vs Manual Cards</h3>
+                <h3 className="text-lg text-gray-600 font-semibold mb-4">AI vs Manual Cards</h3>
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Sparkles className="w-5 h-5 text-purple-600" />
-                      <span className="text-sm">AI Generated</span>
+                      <span className="text-sm text-gray-600">AI Generated</span>
                     </div>
                     <span className="text-lg font-bold text-purple-600">
                       {flashcards.filter(c => c.aiGenerated).length}
@@ -778,7 +698,7 @@ Make sure options are shuffled and realistic distractors.`;
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Plus className="w-5 h-5 text-green-600" />
-                      <span className="text-sm">Manual</span>
+                      <span className="text-sm text-gray-600">Manual</span>
                     </div>
                     <span className="text-lg font-bold text-green-600">
                       {flashcards.filter(c => !c.aiGenerated).length}
@@ -810,27 +730,6 @@ Make sure options are shuffled and realistic distractors.`;
           </div>
         )}
       </div>
-
-      {/* Footer with API Info */}
-      {apiKey && (
-        <div className="bg-white rounded-lg shadow p-4 text-center text-sm text-gray-600">
-          <div className="flex items-center justify-center gap-2 mb-2">
-            <Sparkles className="w-4 h-4 text-purple-500" />
-            <span className="font-medium">AI Integration Active</span>
-          </div>
-          <p>
-            Using {apiKey.startsWith('gsk_') ? 'Groq' : apiKey.startsWith('hf_') ? 'Hugging Face' : 'OpenAI'} API
-            {apiKey && (
-              <button
-                onClick={() => setApiKey('')}
-                className="ml-2 text-red-500 hover:text-red-700 underline"
-              >
-                Disconnect
-              </button>
-            )}
-          </p>
-        </div>
-      )}
     </div>
   );
 };
