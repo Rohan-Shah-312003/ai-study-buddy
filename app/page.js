@@ -33,8 +33,8 @@ const StudyBuddy = () => {
   const [newCard, setNewCard] = useState({ front: '', back: '', difficulty: 'medium' });
   const [showAddCard, setShowAddCard] = useState(false);
 
-  const apiKey = process.env.GROQ_API_KEY;
-
+  const apiKey = process.env.NEXT_PUBLIC_GROQ_API_KEY;  
+  
   // Timer effect
   useEffect(() => {
     let interval = null;
@@ -188,47 +188,48 @@ Make sure options are shuffled and realistic distractors.`;
       throw new Error('Invalid API key format');
     }
   };
+  
 
-  const callHuggingFace = async (prompt) => {
-    const response = await fetch('https://api-inference.huggingface.co/models/microsoft/DialoGPT-large', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        inputs: prompt,
-        parameters: {
-          max_new_tokens: 1000,
-          temperature: 0.7,
-        }
-      })
-    });
+  // const callHuggingFace = async (prompt) => {
+  //   const response = await fetch('https://api-inference.huggingface.co/models/microsoft/DialoGPT-large', {
+  //     method: 'POST',
+  //     headers: {
+  //       'Authorization': `Bearer ${apiKey}`,
+  //       'Content-Type': 'application/json',
+  //     },
+  //     body: JSON.stringify({
+  //       inputs: prompt,
+  //       parameters: {
+  //         max_new_tokens: 1000,
+  //         temperature: 0.7,
+  //       }
+  //     })
+  //   });
 
-    if (!response.ok) throw new Error('Hugging Face API error');
-    const data = await response.json();
-    return data[0]?.generated_text || '';
-  };
+  //   if (!response.ok) throw new Error('Hugging Face API error');
+  //   const data = await response.json();
+  //   return data[0]?.generated_text || '';
+  // };
 
-  const callOpenAI = async (prompt) => {
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-3.5-turbo',
-        messages: [{ role: 'user', content: prompt }],
-        max_tokens: 1000,
-        temperature: 0.7,
-      })
-    });
+  // const callOpenAI = async (prompt) => {
+  //   const response = await fetch('https://api.openai.com/v1/chat/completions', {
+  //     method: 'POST',
+  //     headers: {
+  //       'Authorization': `Bearer ${apiKey}`,
+  //       'Content-Type': 'application/json',
+  //     },
+  //     body: JSON.stringify({
+  //       model: 'gpt-3.5-turbo',
+  //       messages: [{ role: 'user', content: prompt }],
+  //       max_tokens: 1000,
+  //       temperature: 0.7,
+  //     })
+  //   });
 
-    if (!response.ok) throw new Error('OpenAI API error');
-    const data = await response.json();
-    return data.choices[0]?.message?.content || '';
-  };
+  //   if (!response.ok) throw new Error('OpenAI API error');
+  //   const data = await response.json();
+  //   return data.choices[0]?.message?.content || '';
+  // };
 
   const callGroq = async (prompt) => {
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -333,7 +334,7 @@ Make sure options are shuffled and realistic distractors.`;
         <p className="text-gray-600 text-center mb-6">Your intelligent AI-powered companion for effective learning</p>
 
         {/* API Setup */}
-        {!apiKey && (
+        {/* {!apiKey && (
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
             <h3 className="font-semibold text-yellow-800 mb-2">🔑 Setup AI Integration</h3>
             <p className="text-yellow-700 text-sm mb-3">To use AI features, add your API key from one of these free providers:</p>
@@ -358,10 +359,10 @@ Make sure options are shuffled and realistic distractors.`;
               </button>
             </div>
           </div>
-        )}
+        )} */}
 
         {/* AI Topic Input */}
-        {apiKey && (
+        {/* {apiKey && ( */}
           <div className="bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl p-4 mb-6">
             <h3 className="font-semibold mb-3 flex items-center gap-2">
               <Sparkles size={20} />
@@ -402,7 +403,7 @@ Make sure options are shuffled and realistic distractors.`;
               </button>
             </div>
           </div>
-        )}
+        {/* )} */}
 
         {/* Navigation Tabs */}
         <div className="flex flex-wrap justify-center gap-2 mb-6 border-b">
