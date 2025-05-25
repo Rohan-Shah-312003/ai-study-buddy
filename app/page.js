@@ -1,7 +1,13 @@
 "use client"
 
 import React, { useState, useEffect } from 'react';
-import { Clock, BookOpen, Brain, Target, Plus, Play, Pause, RotateCcw, CheckCircle, XCircle, Star, TrendingUp, Sparkles, BookmarkPlus, Loader2 } from 'lucide-react';
+import { Brain, Sparkles, Plus } from 'lucide-react';
+import AIIntegration from './components/AIIntegration';
+import Timer from './components/Timer';
+import Flashcards from './components/Flashcards';
+import Quiz from './components/Quiz';
+import NavigationTabs from './components/NavigationTabs';
+import Stats from './components/Stats';
 
 const StudyBuddy = () => {
   const [activeTab, setActiveTab] = useState('flashcards');
@@ -33,6 +39,36 @@ const StudyBuddy = () => {
   const [showAddCard, setShowAddCard] = useState(false);
 
   const apiKey = process.env.NEXT_PUBLIC_GROQ_API_KEY;
+
+  // Multiple AI provider support
+  const callAI = async (prompt) => {
+    if (apiKey && apiKey.startsWith('gsk_')) {
+      return await callGroq(prompt);
+    }
+    else {
+      throw new Error('Invalid API key format');
+    }
+  };
+
+  const callGroq = async (prompt) => {
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'llama3-8b-8192',
+        messages: [{ role: 'user', content: prompt }],
+        max_tokens: 1000,
+        temperature: 0.7,
+      })
+    });
+
+    if (!response.ok) throw new Error('Groq API error');
+    const data = await response.json();
+    return data.choices[0]?.message?.content || '';
+  };
 
   // Timer effect
   useEffect(() => {
@@ -171,36 +207,6 @@ const StudyBuddy = () => {
     setIsGenerating(false);
   };
 
-  // Multiple AI provider support
-  const callAI = async (prompt) => {
-    if (apiKey.startsWith('gsk_')) {
-      return await callGroq(prompt);
-    }
-    else {
-      throw new Error('Invalid API key format');
-    }
-  };
-
-  const callGroq = async (prompt) => {
-    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'llama3-8b-8192',
-        messages: [{ role: 'user', content: prompt }],
-        max_tokens: 1000,
-        temperature: 0.7,
-      })
-    });
-
-    if (!response.ok) throw new Error('Groq API error');
-    const data = await response.json();
-    return data.choices[0]?.message?.content || '';
-  };
-
   // Fallback quiz generation
   const generateBasicQuiz = () => {
     const questions = flashcards.slice(0, 5).map(card => ({
@@ -283,451 +289,78 @@ const StudyBuddy = () => {
         </h1>
         <p className="text-gray-600 text-center mb-6">Your intelligent AI-powered companion for effective learning</p>
 
-        {/* AI Topic Input */}
-        <div className="bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl p-4 mb-6">
-          <h3 className="font-semibold mb-3 flex items-center gap-2">
-            <Sparkles size={20} />
-            AI-Powered Study Generation
-          </h3>
-          <div className="flex flex-wrap gap-3">
-            <input
-              type="text"
-              placeholder="Enter study topic (e.g., 'Photosynthesis', 'World War 2', 'JavaScript')"
-              value={studyTopic}
-              onChange={(e) => setStudyTopic(e.target.value)}
-              className="flex-1 p-2 rounded text-gray-800 min-w-64"
-            />
-            <select
-              value={difficulty}
-              onChange={(e) => setDifficulty(e.target.value)}
-              className="p-2 rounded text-gray-800"
-            >
-              <option value="easy">Easy</option>
-              <option value="medium">Medium</option>
-              <option value="hard">Hard</option>
-            </select>
-            <button
-              onClick={generateFlashcardsWithAI}
-              disabled={isGenerating}
-              className="bg-white text-purple-600 px-4 py-2 rounded font-medium hover:bg-gray-100 disabled:opacity-50 flex items-center gap-2"
-            >
-              {isGenerating ? <Loader2 className="animate-spin" size={16} /> : <BookmarkPlus size={16} />}
-              Generate Cards
-            </button>
-            <button
-              onClick={getStudyTips}
-              disabled={isGenerating}
-              className="bg-white bg-opacity-20 text-white px-4 py-2 rounded font-medium hover:bg-opacity-30 disabled:opacity-50 flex items-center gap-2"
-            >
-              {isGenerating ? <Loader2 className="animate-spin" size={16} /> : <Target size={16} />}
-              Get Tips
-            </button>
-          </div>
-        </div>
+        <AIIntegration
+          studyTopic={studyTopic}
+          setStudyTopic={setStudyTopic}
+          difficulty={difficulty}
+          setDifficulty={setDifficulty}
+          generateFlashcardsWithAI={generateFlashcardsWithAI}
+          getStudyTips={getStudyTips}
+          isGenerating={isGenerating}
+        />
 
-        {/* Navigation Tabs */}
-        <div className="flex flex-wrap justify-center gap-2 mb-6 border-b">
-          {[
-            { id: 'flashcards', label: 'Flashcards', icon: BookOpen },
-            { id: 'timer', label: 'Study Timer', icon: Clock },
-            { id: 'quiz', label: 'Quiz Mode', icon: Target },
-            { id: 'stats', label: 'Progress', icon: TrendingUp }
-          ].map(tab => {
-            const Icon = tab.icon;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${activeTab === tab.id
-                  ? 'bg-blue-600 text-white shadow-md'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-              >
-                <Icon size={18} />
-                {tab.label}
-              </button>
-            );
-          })}
-        </div>
+        <NavigationTabs
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+        />
 
-        {/* Flashcards Tab */}
         {activeTab === 'flashcards' && (
-          <div className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h2 className="text-xl font-semibold text-gray-800">Flashcard Study</h2>
-              <button
-                onClick={() => setShowAddCard(!showAddCard)}
-                className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
-              >
-                <Plus size={18} />
-                Add Manual Card
-              </button>
-            </div>
-
-            {showAddCard && (
-              <div className="bg-gray-50 p-4 rounded-lg border-2 border-dashed border-gray-300">
-                <div className="space-y-3">
-                  <input
-                    type="text"
-                    placeholder="Front of card (question)"
-                    value={newCard.front}
-                    onChange={(e) => setNewCard(prev => ({ ...prev, front: e.target.value }))}
-                    className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                  <textarea
-                    placeholder="Back of card (answer)"
-                    value={newCard.back}
-                    onChange={(e) => setNewCard(prev => ({ ...prev, back: e.target.value }))}
-                    className="w-full p-3 border rounded-lg h-20 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                  <div className="flex gap-3">
-                    <select
-                      value={newCard.difficulty}
-                      onChange={(e) => setNewCard(prev => ({ ...prev, difficulty: e.target.value }))}
-                      className="border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="easy">Easy</option>
-                      <option value="medium">Medium</option>
-                      <option value="hard">Hard</option>
-                    </select>
-                    <button
-                      onClick={addFlashcard}
-                      className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
-                    >
-                      Add Card
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {flashcards.length === 0 ? (
-              <div className="text-center py-12 text-gray-500">
-                <BookOpen size={48} className="mx-auto mb-4 opacity-50" />
-                <p className="text-lg mb-2">No flashcards yet!</p>
-                <p className="text-sm">Generate AI flashcards above or add manual cards to get started.</p>
-              </div>
-            ) : (
-              <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-6 rounded-xl text-white">
-                <div className="flex justify-between items-center mb-4">
-                  <span className="text-sm opacity-90">
-                    Card {currentCard + 1} of {flashcards.length}
-                  </span>
-                  <div className="flex items-center gap-2">
-                    {flashcards[currentCard]?.aiGenerated && (
-                      <span className="flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-white bg-opacity-20">
-                        <Sparkles size={12} />
-                        AI
-                      </span>
-                    )}
-                    <span className={`px-2 py-1 rounded-full text-xs ${getDifficultyColor(flashcards[currentCard]?.difficulty)} text-gray-700 bg-white`}>
-                      {flashcards[currentCard]?.difficulty}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="bg-white bg-opacity-20 backdrop-blur-sm rounded-lg p-6 min-h-32 flex items-center justify-center text-center">
-                  <div>
-                    <h3 className="text-lg font-medium mb-4">
-                      {showAnswer ? 'Answer:' : 'Question:'}
-                    </h3>
-                    <p className="text-xl">
-                      {showAnswer ? flashcards[currentCard]?.back : flashcards[currentCard]?.front}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex justify-center gap-3 mt-6">
-                  {!showAnswer ? (
-                    <button
-                      onClick={() => setShowAnswer(true)}
-                      className="bg-white text-blue-600 px-6 py-2 rounded-lg font-medium hover:bg-gray-100 transition-colors"
-                    >
-                      Show Answer
-                    </button>
-                  ) : (
-                    <>
-                      <button
-                        onClick={() => handleCardAnswer(false)}
-                        className="flex items-center gap-2 bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors"
-                      >
-                        <XCircle size={18} />
-                        Incorrect
-                      </button>
-                      <button
-                        onClick={() => handleCardAnswer(true)}
-                        className="flex items-center gap-2 bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors"
-                      >
-                        <CheckCircle size={18} />
-                        Correct
-                      </button>
-                    </>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
+          <Flashcards
+            flashcards={flashcards}
+            currentCard={currentCard}
+            setCurrentCard={setCurrentCard}
+            showAnswer={showAnswer}
+            setShowAnswer={setShowAnswer}
+            studyStats={studyStats}
+            setStudyStats={setStudyStats}
+            handleCardAnswer={handleCardAnswer}
+            addFlashcard={addFlashcard}
+            newCard={newCard}
+            setNewCard={setNewCard}
+            showAddCard={showAddCard}
+            setShowAddCard={setShowAddCard}
+            getDifficultyColor={getDifficultyColor}
+          />
         )}
 
-        {/* Timer Tab */}
         {activeTab === 'timer' && (
-          <div className="text-center space-y-6">
-            <h2 className="text-2xl font-semibold text-gray-800">Pomodoro Timer</h2>
-
-            <div className="bg-gradient-to-r from-red-400 to-pink-500 text-white rounded-xl p-8">
-              <div className="mb-4">
-                <span className="text-sm opacity-90 uppercase tracking-wide">
-                  {timerMode === 'pomodoro' ? 'Focus Time' : 'Break Time'}
-                </span>
-              </div>
-
-              <div className="text-6xl font-bold mb-6 font-mono">
-                {formatTime(timeLeft)}
-              </div>
-
-              <div className="flex justify-center gap-3">
-                <button
-                  onClick={() => setIsTimerActive(!isTimerActive)}
-                  className="flex items-center gap-2 bg-white text-red-500 px-6 py-3 rounded-lg font-medium hover:bg-gray-100 transition-colors"
-                >
-                  {isTimerActive ? <Pause size={20} /> : <Play size={20} />}
-                  {isTimerActive ? 'Pause' : 'Start'}
-                </button>
-
-                <button
-                  onClick={() => {
-                    setIsTimerActive(false);
-                    setTimeLeft(timerMode === 'pomodoro' ? 25 * 60 : 5 * 60);
-                  }}
-                  className="flex items-center gap-2 bg-white bg-opacity-20 text-white px-6 py-3 rounded-lg font-medium hover:bg-white hover:bg-opacity-30 transition-colors"
-                >
-                  <RotateCcw size={20} />
-                  Reset
-                </button>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-3 gap-4 text-center">
-              <div className="bg-blue-100 p-4 rounded-lg">
-                <div className="text-2xl font-bold text-blue-600">{timerCompleted}</div>
-                <div className="text-sm text-gray-600">Sessions Completed</div>
-              </div>
-              <div className="bg-green-100 p-4 rounded-lg">
-                <div className="text-2xl font-bold text-green-600">{studyStats.streak}</div>
-                <div className="text-sm text-gray-600">Current Streak</div>
-              </div>
-              <div className="bg-purple-100 p-4 rounded-lg">
-                <div className="text-2xl font-bold text-purple-600">{Math.round((timerCompleted * 25) / 60)}h</div>
-                <div className="text-sm text-gray-600">Total Study Time</div>
-              </div>
-            </div>
-          </div>
+          <Timer
+            timerMode={timerMode}
+            timeLeft={timeLeft}
+            isTimerActive={isTimerActive}
+            setIsTimerActive={setIsTimerActive}
+            setTimeLeft={setTimeLeft}
+            timerCompleted={timerCompleted}
+            setTimerCompleted={setTimerCompleted}
+            formatTime={formatTime}
+          />
         )}
 
-        {/* Quiz Tab */}
         {activeTab === 'quiz' && (
-          <div className="space-y-6">
-            {!quizStarted && quizResults.length === 0 ? (
-              <div className="text-center">
-                <h2 className="text-2xl font-semibold text-gray-800 mb-4">Quiz Mode</h2>
-                <p className="text-gray-600 mb-6">Test your knowledge with AI-generated quizzes</p>
-                <div className="flex justify-center gap-3">
-                  {apiKey ? (
-                    <button
-                      onClick={generateQuizWithAI}
-                      disabled={flashcards.length === 0 || isGenerating}
-                      className="bg-blue-600 text-gray-600 text-white px-8 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center gap-2"
-                    >
-                      {isGenerating ? <Loader2 className="animate-spin" size={18} /> : <Sparkles size={18} />}
-                      AI Quiz
-                    </button>
-                  ) : null}
-                  <button
-                    onClick={generateBasicQuiz}
-                    disabled={flashcards.length === 0}
-                    className="bg-gray-600  text-white px-8 py-3 rounded-lg font-medium hover:bg-gray-700 transition-colors disabled:opacity-50"
-                  >
-                    Basic Quiz
-                  </button>
-                </div>
-              </div>
-            ) : quizStarted ? (
-              <div>
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg text-gray-600 font-semibold">Question {currentQuiz + 1} of {quizQuestions.length}</h3>
-                  <div className="bg-gray-200 text-gray-600 rounded-full h-2 w-32">
-                    <div
-                      className="bg-blue-600 h-2  rounded-full transition-all"
-                      style={{ width: `${((currentQuiz + 1) / quizQuestions.length) * 100}%` }}
-                    ></div>
-                  </div>
-                </div>
-
-                <div className="bg-gray-50 p-6 rounded-lg mb-6">
-                  <h4 className="text-xl text-gray-600 font-medium mb-4">{quizQuestions[currentQuiz]?.question}</h4>
-                  <div className="grid text-gray-600 gap-3">
-                    {quizQuestions[currentQuiz]?.options.map((option, index) => (
-                      <button
-                        key={index}
-                        onClick={() => handleQuizAnswer(option)}
-                        className="text-left text-gray-600 p-3 bg-white border rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-colors"
-                      >
-                        {option}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="text-center">
-                <h3 className="text-2xl font-semibold text-gray-800 mb-4">Quiz Complete!</h3>
-                <div className="bg-green-100 p-6 rounded-lg mb-6">
-                  <div className="text-3xl font-bold text-green-600 mb-2">
-                    {quizResults.filter(r => r.correct).length}/{quizResults.length}
-                  </div>
-                  <div className="text-gray-700">Correct Answers</div>
-                </div>
-                <div className="flex justify-center gap-3">
-                  {apiKey && (
-                    <button
-                      onClick={() => {
-                        setQuizResults([]);
-                        generateQuizWithAI();
-                      }}
-                      className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2"
-                    >
-                      <Sparkles size={16} />
-                      New AI Quiz
-                    </button>
-                  )}
-                  <button
-                    onClick={() => {
-                      setQuizResults([]);
-                      generateBasicQuiz();
-                    }}
-                    className="bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700"
-                  >
-                    Try Again
-                  </button>
-                  <button
-                    onClick={() => setQuizResults([])}
-                    className="bg-gray-400 text-white px-6 py-2 rounded-lg hover:bg-gray-500"
-                  >
-                    Back to Menu
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
+          <Quiz
+            quizQuestions={quizQuestions}
+            currentQuiz={currentQuiz}
+            setCurrentQuiz={setCurrentQuiz}
+            quizStarted={quizStarted}
+            setQuizStarted={setQuizStarted}
+            quizResults={quizResults}
+            setQuizResults={setQuizResults}
+            generateQuizWithAI={generateQuizWithAI}
+            generateBasicQuiz={generateBasicQuiz}
+            handleQuizAnswer={handleQuizAnswer}
+            isGenerating={isGenerating}
+            apiKey={apiKey}
+            flashcards={flashcards}
+          />
         )}
 
-        {/* Stats Tab */}
         {activeTab === 'stats' && (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-semibold text-gray-800 text-center">Study Progress</h2>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="bg-blue-100 p-4 rounded-lg text-center">
-                <BookOpen className="w-8 h-8 text-blue-600 mx-auto mb-2" />
-                <div className="text-2xl font-bold text-blue-600">{flashcards.length}</div>
-                <div className="text-sm text-gray-600">Total Cards</div>
-              </div>
-
-              <div className="bg-green-100 p-4 rounded-lg text-center">
-                <Star className="w-8 h-8 text-green-600 mx-auto mb-2" />
-                <div className="text-2xl font-bold text-green-600">{flashcards.filter(c => c.mastered).length}</div>
-                <div className="text-sm text-gray-600">Mastered</div>
-              </div>
-
-              <div className="bg-yellow-100 p-4 rounded-lg text-center">
-                <Target className="w-8 h-8 text-yellow-600 mx-auto mb-2" />
-                <div className="text-2xl font-bold text-yellow-600">
-                  {studyStats.correct + studyStats.incorrect > 0
-                    ? Math.round((studyStats.correct / (studyStats.correct + studyStats.incorrect)) * 100)
-                    : 0}%
-                </div>
-                <div className="text-sm text-gray-600">Accuracy</div>
-              </div>
-
-              <div className="bg-purple-100 p-4 rounded-lg text-center">
-                <Clock className="w-8 h-8 text-purple-600 mx-auto mb-2" />
-                <div className="text-2xl font-bold text-purple-600">{timerCompleted}</div>
-                <div className="text-sm text-gray-600">Study Sessions</div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="bg-gray-50 p-6 rounded-lg">
-                <h3 className="text-lg text-gray-600 font-semibold mb-4">Card Difficulty Distribution</h3>
-                <div className="space-y-2">
-                  {['easy', 'medium', 'hard'].map(difficulty => {
-                    const count = flashcards.filter(c => c.difficulty === difficulty).length;
-                    const percentage = flashcards.length ? (count / flashcards.length) * 100 : 0;
-                    return (
-                      <div key={difficulty} className="flex items-center gap-3">
-                        <span className={`w-16 text-sm capitalize ${getDifficultyColor(difficulty)} px-2 py-1 rounded`}>
-                          {difficulty}
-                        </span>
-                        <div className="flex-1 bg-gray-200 rounded-full h-4">
-                          <div
-                            className={`h-4 rounded-full ${difficulty === 'easy' ? 'bg-green-500' :
-                              difficulty === 'medium' ? 'bg-yellow-500' : 'bg-red-500'
-                              }`}
-                            style={{ width: `${percentage}%` }}
-                          ></div>
-                        </div>
-                        <span className="text-sm text-gray-600 w-8">{count}</span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div className="bg-gray-50 p-6 rounded-lg">
-                <h3 className="text-lg text-gray-600 font-semibold mb-4">AI vs Manual Cards</h3>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Sparkles className="w-5 h-5 text-purple-600" />
-                      <span className="text-sm text-gray-600">AI Generated</span>
-                    </div>
-                    <span className="text-lg font-bold text-purple-600">
-                      {flashcards.filter(c => c.aiGenerated).length}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Plus className="w-5 h-5 text-green-600" />
-                      <span className="text-sm text-gray-600">Manual</span>
-                    </div>
-                    <span className="text-lg font-bold text-green-600">
-                      {flashcards.filter(c => !c.aiGenerated).length}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {flashcards.length > 0 && (
-              <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg p-6">
-                <h3 className="text-lg font-semibold mb-3">Study Recommendations</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <strong>Focus Area:</strong>
-                    {flashcards.filter(c => !c.mastered).length > 0
-                      ? ` ${flashcards.filter(c => !c.mastered).length} cards need review`
-                      : ' Great job! All cards mastered!'}
-                  </div>
-                  <div>
-                    <strong>Next Session:</strong>
-                    {studyStats.streak >= 5
-                      ? ' Take a break, you\'re on fire! 🔥'
-                      : ' Keep going to build your streak!'}
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
+          <Stats
+            studyStats={studyStats}
+            flashcards={flashcards}
+            timerCompleted={timerCompleted}
+            getDifficultyColor={getDifficultyColor}
+          />
         )}
       </div>
     </div>
