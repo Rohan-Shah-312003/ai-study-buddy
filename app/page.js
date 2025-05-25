@@ -33,8 +33,8 @@ const StudyBuddy = () => {
   const [newCard, setNewCard] = useState({ front: '', back: '', difficulty: 'medium' });
   const [showAddCard, setShowAddCard] = useState(false);
 
-  const apiKey = process.env.NEXT_PUBLIC_GROQ_API_KEY;  
-  
+  const apiKey = process.env.NEXT_PUBLIC_GROQ_API_KEY;
+
   // Timer effect
   useEffect(() => {
     let interval = null;
@@ -181,14 +181,14 @@ Make sure options are shuffled and realistic distractors.`;
     // }
     // Try Groq (free tier)
     // else
-    //  if (apiKey.startsWith('gsk_')) {
+    if (apiKey.startsWith('gsk_')) {
       return await callGroq(prompt);
-    // }
-    // else {
-    //   throw new Error('Invalid API key format');
-    // }
+    }
+    else {
+      throw new Error('Invalid API key format');
+    }
   };
-  
+
 
   // const callHuggingFace = async (prompt) => {
   //   const response = await fetch('https://api-inference.huggingface.co/models/microsoft/DialoGPT-large', {
@@ -363,46 +363,46 @@ Make sure options are shuffled and realistic distractors.`;
 
         {/* AI Topic Input */}
         {/* {apiKey && ( */}
-          <div className="bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl p-4 mb-6">
-            <h3 className="font-semibold mb-3 flex items-center gap-2">
-              <Sparkles size={20} />
-              AI-Powered Study Generation
-            </h3>
-            <div className="flex flex-wrap gap-3">
-              <input
-                type="text"
-                placeholder="Enter study topic (e.g., 'Photosynthesis', 'World War 2', 'JavaScript')"
-                value={studyTopic}
-                onChange={(e) => setStudyTopic(e.target.value)}
-                className="flex-1 p-2 rounded text-gray-800 min-w-64"
-              />
-              <select
-                value={difficulty}
-                onChange={(e) => setDifficulty(e.target.value)}
-                className="p-2 rounded text-gray-800"
-              >
-                <option value="easy">Easy</option>
-                <option value="medium">Medium</option>
-                <option value="hard">Hard</option>
-              </select>
-              <button
-                onClick={generateFlashcardsWithAI}
-                disabled={isGenerating}
-                className="bg-white text-purple-600 px-4 py-2 rounded font-medium hover:bg-gray-100 disabled:opacity-50 flex items-center gap-2"
-              >
-                {isGenerating ? <Loader2 className="animate-spin" size={16} /> : <BookmarkPlus size={16} />}
-                Generate Cards
-              </button>
-              <button
-                onClick={getStudyTips}
-                disabled={isGenerating}
-                className="bg-white bg-opacity-20 text-white px-4 py-2 rounded font-medium hover:bg-opacity-30 disabled:opacity-50 flex items-center gap-2"
-              >
-                {isGenerating ? <Loader2 className="animate-spin" size={16} /> : <Target size={16} />}
-                Get Tips
-              </button>
-            </div>
+        <div className="bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl p-4 mb-6">
+          <h3 className="font-semibold mb-3 flex items-center gap-2">
+            <Sparkles size={20} />
+            AI-Powered Study Generation
+          </h3>
+          <div className="flex flex-wrap gap-3">
+            <input
+              type="text"
+              placeholder="Enter study topic (e.g., 'Photosynthesis', 'World War 2', 'JavaScript')"
+              value={studyTopic}
+              onChange={(e) => setStudyTopic(e.target.value)}
+              className="flex-1 p-2 rounded text-gray-800 min-w-64"
+            />
+            <select
+              value={difficulty}
+              onChange={(e) => setDifficulty(e.target.value)}
+              className="p-2 rounded text-gray-800"
+            >
+              <option value="easy">Easy</option>
+              <option value="medium">Medium</option>
+              <option value="hard">Hard</option>
+            </select>
+            <button
+              onClick={generateFlashcardsWithAI}
+              disabled={isGenerating}
+              className="bg-white text-purple-600 px-4 py-2 rounded font-medium hover:bg-gray-100 disabled:opacity-50 flex items-center gap-2"
+            >
+              {isGenerating ? <Loader2 className="animate-spin" size={16} /> : <BookmarkPlus size={16} />}
+              Generate Cards
+            </button>
+            <button
+              onClick={getStudyTips}
+              disabled={isGenerating}
+              className="bg-white bg-opacity-20 text-white px-4 py-2 rounded font-medium hover:bg-opacity-30 disabled:opacity-50 flex items-center gap-2"
+            >
+              {isGenerating ? <Loader2 className="animate-spin" size={16} /> : <Target size={16} />}
+              Get Tips
+            </button>
           </div>
+        </div>
         {/* )} */}
 
         {/* Navigation Tabs */}
@@ -419,8 +419,8 @@ Make sure options are shuffled and realistic distractors.`;
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${activeTab === tab.id
-                    ? 'bg-blue-600 text-white shadow-md'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  ? 'bg-blue-600 text-white shadow-md'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                   }`}
               >
                 <Icon size={18} />
@@ -751,7 +751,7 @@ Make sure options are shuffled and realistic distractors.`;
                         <div className="flex-1 bg-gray-200 rounded-full h-4">
                           <div
                             className={`h-4 rounded-full ${difficulty === 'easy' ? 'bg-green-500' :
-                                difficulty === 'medium' ? 'bg-yellow-500' : 'bg-red-500'
+                              difficulty === 'medium' ? 'bg-yellow-500' : 'bg-red-500'
                               }`}
                             style={{ width: `${percentage}%` }}
                           ></div>
